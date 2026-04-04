@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🇪🇸 Acciones Españolas</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Sora', sans-serif; background: #f4f6fb; min-height: 100vh; }
+
+  header {
+    background: linear-gradient(135deg, #0f2c5e 0%, #1a4fa0 60%, #2563c7 100%);
+    padding: 24px 20px 20px;
+    box-shadow: 0 4px 24px rgba(15,44,94,0.18);
+  }
+  .header-top { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+  h1 { color: #fff; font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .badge-ibex { background: rgba(255,255,255,0.15); color: #b8d4ff; border-radius: 6px; padding: 3px 10px; font-size: 11px; font-weight: 600; letter-spacing: 1px; }
+  .subtitle { color: rgba(255,255,255,0.55); font-size: 12px; margin-top: 4px; }
+  #btn-refresh {
+    background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.25);
+    color: #fff; border-radius: 10px; padding: 10px 20px; cursor: pointer;
+    font-family: 'Sora', sans-serif; font-weight: 600; font-size: 13px;
+    display: flex; align-items: center; gap: 8px; transition: all 0.2s;
+  }
+  #btn-refresh:disabled { opacity: 0.5; cursor: not-allowed; }
+  .filters { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; align-items: center; }
+  #search {
+    background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 8px; padding: 8px 14px; color: #fff; font-family: 'Sora', sans-serif;
+    font-size: 13px; outline: none; min-width: 200px;
+  }
+  #search::placeholder { color: rgba(255,255,255,0.4); }
+  .filter-btn {
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+    color: #fff; border-radius: 8px; padding: 8px 14px; cursor: pointer;
+    font-family: 'Sora', sans-serif; font-size: 12px; font-weight: 600; transition: all 0.15s;
+  }
+  .filter-btn.active { background: rgba(255,255,255,0.25); border-color: rgba(255,255,255,0.5); }
+
+  main { max-width: 1300px; margin: 0 auto; padding: 20px 16px; }
+
+  #error-box {
+    display: none; background: #fff0f0; border: 1px solid #ffc0c0;
+    border-radius: 10px; padding: 14px 18px; color: #c0220a; margin-bottom: 16px; font-size: 13px;
+  }
+
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 12px; margin-bottom: 20px; }
+  .stat-card {
+    background: #fff; border-radius: 12px; padding: 16px 18px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.06); border: 1px solid #e8ecf2;
+  }
+  .stat-icon { font-size: 20px; }
+  .stat-val { font-size: 22px; font-weight: 700; color: #0f2c5e; margin-top: 4px; }
+  .stat-label { font-size: 11px; color: #888; font-weight: 500; letter-spacing: 0.5px; text-transform: uppercase; }
+
+  .table-wrap { background: #fff; border-radius: 14px; box-shadow: 0 2px 12px rgba(0,0,0,0.07); border: 1px solid #e8ecf2; overflow: hidden; }
+  .table-scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead tr { background: #f8fafd; }
+  th {
+    padding: 10px 12px; font-weight: 600; font-size: 11px; letter-spacing: 0.8px;
+    text-transform: uppercase; color: #888; white-space: nowrap;
+    border-bottom: 2px solid #e8ecf2; cursor: pointer; user-select: none;
+    transition: color 0.15s;
+  }
+  th:hover { color: #1a6adb; }
+  th.active { color: #1a6adb; }
+  th.right, td.right { text-align: right; }
+  tbody tr { border-bottom: 1px solid #f0f2f7; cursor: pointer; transition: background 0.1s; }
+  tbody tr:nth-child(even) { background: #fafbfd; }
+  tbody tr:hover { background: #f0f5ff !important; }
+  tbody tr.selected { background: #eef4ff !important; }
+  td { padding: 10px 12px; }
+
+  .ticker-cell { font-weight: 700; font-family: 'DM Mono', monospace; color: #1a4fa0; font-size: 13px; }
+  .nombre-main { font-weight: 500; color: #1a2340; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 160px; }
+  .nombre-sub { font-size: 10px; color: #aaa; margin-top: 1px; }
+  .sector-badge {
+    border-radius: 6px; padding: 2px 8px; font-size: 11px; font-weight: 600;
+  }
+  .sector-s { background: rgba(90,160,255,0.12); color: #1a52a0; }
+  .sector-d { background: rgba(120,180,100,0.12); color: #2a6020; }
+
+  .precio-cell { font-weight: 700; font-family: 'DM Mono', monospace; color: #0f2c5e; font-size: 14px; }
+  .mono { font-family: 'DM Mono', monospace; color: #555; font-size: 12px; }
+
+  .pct-badge {
+    display: inline-flex; align-items: center; gap: 2px;
+    padding: 2px 7px; border-radius: 999px; font-size: 11px; font-weight: 700;
+    font-family: 'DM Mono', monospace;
+  }
+  .pct-up { background: rgba(52,199,89,0.13); color: #1a9e3f; border: 1px solid rgba(52,199,89,0.3); }
+  .pct-down { background: rgba(255,59,48,0.13); color: #d0220a; border: 1px solid rgba(255,59,48,0.3); }
+  .pct-neutral { background: #f0f0f0; color: #888; border: 1px solid #ddd; }
+
+  .per-badge { border-radius: 6px; padding: 2px 8px; font-weight: 700; font-size: 12px; font-family: 'DM Mono', monospace; }
+  .per-low { background: rgba(52,199,89,0.15); color: #1a7a35; }
+  .per-mid { background: rgba(255,204,0,0.18); color: #8a6000; }
+  .per-high { background: rgba(255,59,48,0.13); color: #c0220a; }
+  .per-ok { background: #f0f0f0; color: #555; }
+
+  .rpd-badge { border-radius: 6px; padding: 2px 8px; font-weight: 700; font-size: 12px; font-family: 'DM Mono', monospace; }
+  .rpd-high { background: rgba(52,199,89,0.18); color: #1a7a35; }
+  .rpd-mid { background: rgba(90,160,255,0.18); color: #1a52a0; }
+  .rpd-low { background: #f0f0f0; color: #555; }
+
+  /* Detalle */
+  #detalle {
+    display: none; background: #fff; border-radius: 14px; margin-top: 16px; padding: 22px 24px;
+    box-shadow: 0 4px 20px rgba(26,79,160,0.1); border: 2px solid #c8d8f8;
+  }
+  .detalle-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+  .detalle-titulo { font-size: 18px; font-weight: 700; color: #0f2c5e; }
+  .detalle-sub { font-size: 12px; color: #888; margin-top: 3px; }
+  #btn-cerrar {
+    background: none; border: 1px solid #dde3ef; border-radius: 8px;
+    padding: 6px 12px; cursor: pointer; color: #888; font-family: 'Sora', sans-serif; font-size: 12px;
+  }
+  .detalle-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px,1fr)); gap: 12px; }
+  .detalle-card { background: #f8fafd; border-radius: 10px; padding: 12px 14px; border: 1px solid #e8ecf2; }
+  .detalle-label { font-size: 10px; color: #999; text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600; margin-bottom: 5px; }
+  .detalle-val { font-size: 15px; font-weight: 700; color: #1a2340; font-family: 'DM Mono', monospace; }
+
+  .rango-wrap { margin-top: 16px; }
+  .rango-label { font-size: 11px; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; }
+  .rango-bar { background: #eef2f8; border-radius: 999px; height: 8px; position: relative; overflow: hidden; }
+  .rango-fill { position: absolute; left: 0; top: 0; height: 100%; border-radius: 999px; background: linear-gradient(90deg, #e74c3c, #f39c12, #27ae60); transition: width 0.5s ease; }
+  .rango-nums { display: flex; justify-content: space-between; margin-top: 4px; font-size: 11px; color: #aaa; font-family: 'DM Mono', monospace; }
+
+  .loading-spin { display: inline-block; animation: spin 1s linear infinite; }
+  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+  footer { text-align: center; color: #bbb; font-size: 11px; padding: 20px; }
+
+  @media (max-width: 600px) {
+    h1 { font-size: 16px; }
+    .stat-val { font-size: 18px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-top">
+    <div>
+      <h1>🇪🇸 Acciones Españolas <span class="badge-ibex">BME · IBEX</span></h1>
+      <p class="subtitle" id="last-update">Sin datos aún · Auto-refresh cada 5 min</p>
+    </div>
+    <button id="btn-refresh" onclick="fetchData()">⟳ Actualizar</button>
+  </div>
+  <div class="filters">
+    <input id="search" type="text" placeholder="🔍 Buscar empresa o ticker..." oninput="renderTable()">
+    <button class="filter-btn active" onclick="setFiltro('Todos', this)">Todos</button>
+    <button class="filter-btn" onclick="setFiltro('Sensitivo', this)">Sensitivo</button>
+    <button class="filter-btn" onclick="setFiltro('Defensivo', this)">Defensivo</button>
+  </div>
+</header>
+
+<main>
+  <div id="error-box">⚠️ <span id="error-msg"></span></div>
+
+  <div class="stats-grid" id="stats-grid" style="display:none">
+    <div class="stat-card"><div class="stat-icon">🏛️</div><div class="stat-val" id="s-total">—</div><div class="stat-label">Empresas</div></div>
+    <div class="stat-card"><div class="stat-icon">📈</div><div class="stat-val" id="s-up">—</div><div class="stat-label">Subiendo hoy</div></div>
+    <div class="stat-card"><div class="stat-icon">📉</div><div class="stat-val" id="s-down">—</div><div class="stat-label">Bajando hoy</div></div>
+    <div class="stat-card"><div class="stat-icon">💰</div><div class="stat-val" id="s-rpd">—</div><div class="stat-label">RPD Media</div></div>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th onclick="sortBy('ticker')" id="th-ticker">Ticker</th>
+            <th onclick="sortBy('nombre')" id="th-nombre">Empresa</th>
+            <th onclick="sortBy('sector')" id="th-sector">Sector</th>
+            <th onclick="sortBy('precio')" id="th-precio" class="right">Precio</th>
+            <th onclick="sortBy('variacion_pct')" id="th-variacion_pct" class="right">Var. %</th>
+            <th onclick="sortBy('max52')" id="th-max52" class="right">Máx 52s</th>
+            <th onclick="sortBy('min52')" id="th-min52" class="right">Mín 52s</th>
+            <th onclick="sortBy('per')" id="th-per" class="right">PER</th>
+            <th onclick="sortBy('per_futuro')" id="th-per_futuro" class="right">PER fut.</th>
+            <th onclick="sortBy('dpa')" id="th-dpa" class="right">DPA €</th>
+            <th onclick="sortBy('rpd_pct')" id="th-rpd_pct" class="right">RPD %</th>
+            <th onclick="sortBy('capitalizacion')" id="th-capitalizacion" class="right">Capitaliz.</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="detalle">
+    <div class="detalle-header">
+      <div>
+        <div class="detalle-titulo" id="d-titulo"></div>
+        <div class="detalle-sub" id="d-sub"></div>
+      </div>
+      <button id="btn-cerrar" onclick="cerrarDetalle()">✕ Cerrar</button>
+    </div>
+    <div class="detalle-grid" id="d-grid"></div>
+    <div class="rango-wrap" id="d-rango" style="display:none">
+      <div class="rango-label">Posición en rango 52 semanas</div>
+      <div class="rango-bar"><div class="rango-fill" id="d-rango-fill"></div></div>
+      <div class="rango-nums"><span id="d-min52"></span><span id="d-max52"></span></div>
+    </div>
+  </div>
+</main>
+
+<footer>Datos proporcionados por IA · No constituyen asesoramiento financiero · Verifica siempre las fuentes oficiales</footer>
+
+<script>
+const STOCKS_BASE = [
+  { ticker:"ACS",  yticker:"ACS.MC",  nombre:"ACS Actividades Construcción", sector:"Sensitivo", subsector:"Industrial" },
+  { ticker:"IBE",  yticker:"IBE.MC",  nombre:"Iberdrola",                     sector:"Sensitivo", subsector:"Industrial" },
+  { ticker:"VIS",  yticker:"VIS.MC",  nombre:"Viscofan",                      sector:"Sensitivo", subsector:"Industrial" },
+  { ticker:"LOG",  yticker:"LOG.MC",  nombre:"Logista",                       sector:"Sensitivo", subsector:"Industrial" },
+  { ticker:"VID",  yticker:"VID.MC",  nombre:"Vidrala",                       sector:"Sensitivo", subsector:"Industrial" },
+  { ticker:"ENG",  yticker:"ENG.MC",  nombre:"Enagás SA",                     sector:"Defensivo", subsector:"Utilidades" },
+  { ticker:"EBRO", yticker:"EBRO.MC", nombre:"Ebro Foods",                    sector:"Defensivo", subsector:"Utilidades" },
+  { ticker:"MCM",  yticker:"MCM.MC",  nombre:"Miguel y Costas",               sector:"Defensivo", subsector:"Utilidades" },
+  { ticker:"ANA",  yticker:"ANA.MC",  nombre:"Acciona",                       sector:"Defensivo", subsector:"Utilidades" },
+  { ticker:"ITX",  yticker:"ITX.MC",  nombre:"Inditex",                       sector:"Defensivo", subsector:"Utilidades" },
+  { ticker:"CBAV", yticker:"CBAV.MC", nombre:"Clínica Baviera",               sector:"Defensivo", subsector:"Utilidades" },
+  { ticker:"RED",  yticker:"RED.MC",  nombre:"Redeia",                        sector:"Defensivo", subsector:"Utilidades" },
+  { ticker:"ACX",  yticker:"ACX.MC",  nombre:"Acerinox",                      sector:"Defensivo", subsector:"Utilidades" },
+  { ticker:"GCO",  yticker:"GCO.MC",  nombre:"Catalana Occidente",            sector:"Defensivo", subsector:"Utilidades" },
+  { ticker:"BBVA", yticker:"BBVA.MC", nombre:"BBVA",                          sector:"Defensivo", subsector:"Utilidades" },
+  { ticker:"GEST", yticker:"GEST.MC", nombre:"Gestamp",                       sector:"Defensivo", subsector:"Utilidades" },
+  { ticker:"NTGY", yticker:"NTGY.MC", nombre:"Naturgy",                       sector:"Defensivo", subsector:"Utilidades" },
+];
+
+let stocks = STOCKS_BASE.map(s => ({...s}));
+let sortKey = "ticker";
+let sortDir = 1;
+let filtroSector = "Todos";
+let selectedTicker = null;
+
+function fmt(val, decimals=2, suffix="") {
+  if (val == null || val === "") return "—";
+  return Number(val).toFixed(decimals) + suffix;
+}
+
+function pctBadge(val) {
+  if (val == null) return '<span class="pct-badge pct-neutral">—</span>';
+  const pos = val >= 0;
+  const arrow = pos ? "▲" : "▼";
+  const cls = pos ? "pct-up" : "pct-down";
+  return `<span class="pct-badge ${cls}">${arrow} ${Math.abs(val).toFixed(2)}%</span>`;
+}
+
+function perBadge(val) {
+  if (!val) return "—";
+  let cls = "per-ok";
+  if (val < 15) cls = "per-low";
+  else if (val < 20) cls = "per-mid";
+  else if (val > 25) cls = "per-high";
+  return `<span class="per-badge ${cls}">${Number(val).toFixed(1)}x</span>`;
+}
+
+function rpdBadge(val) {
+  if (!val) return "—";
+  let cls = "rpd-low";
+  if (val >= 5) cls = "rpd-high";
+  else if (val >= 3) cls = "rpd-mid";
+  return `<span class="rpd-badge ${cls}">${Number(val).toFixed(2)}%</span>`;
+}
+
+function sortBy(key) {
+  if (sortKey === key) sortDir = -sortDir;
+  else { sortKey = key; sortDir = 1; }
+  document.querySelectorAll("th").forEach(t => t.classList.remove("active"));
+  const th = document.getElementById("th-" + key);
+  if (th) th.classList.add("active");
+  renderTable();
+}
+
+function setFiltro(sector, btn) {
+  filtroSector = sector;
+  document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  renderTable();
+}
+
+function renderTable() {
+  const q = document.getElementById("search").value.toLowerCase();
+  let rows = stocks.filter(s => {
+    const matchQ = s.ticker.toLowerCase().includes(q) || s.nombre.toLowerCase().includes(q);
+    const matchS = filtroSector === "Todos" || s.sector === filtroSector;
+    return matchQ && matchS;
+  });
+
+  rows.sort((a, b) => {
+    const av = a[sortKey], bv = b[sortKey];
+    if (av == null && bv == null) return 0;
+    if (av == null) return 1;
+    if (bv == null) return -1;
+    if (typeof av === "string") return av.localeCompare(bv) * sortDir;
+    return (av - bv) * sortDir;
+  });
+
+  const tbody = document.getElementById("tbody");
+  if (rows.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="12" style="text-align:center;padding:40px;color:#bbb;font-size:14px;">No hay resultados</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = rows.map((s, i) => {
+    const sel = s.ticker === selectedTicker ? "selected" : "";
+    return `<tr class="${sel}" onclick="toggleDetalle('${s.ticker}')">
+      <td class="ticker-cell">${s.ticker}</td>
+      <td><div class="nombre-main">${s.nombre}</div><div class="nombre-sub">${s.yticker}</div></td>
+      <td><span class="sector-badge ${s.sector==="Sensitivo"?"sector-s":"sector-d"}">${s.sector}</span></td>
+      <td class="right precio-cell">${s.precio != null ? fmt(s.precio) + " €" : "<span style='color:#ccc'>···</span>"}</td>
+      <td class="right">${pctBadge(s.variacion_pct)}</td>
+      <td class="right mono">${fmt(s.max52)}</td>
+      <td class="right mono">${fmt(s.min52)}</td>
+      <td class="right">${perBadge(s.per)}</td>
+      <td class="right">${perBadge(s.per_futuro)}</td>
+      <td class="right mono">${s.dpa != null ? fmt(s.dpa) + " €" : "—"}</td>
+      <td class="right">${rpdBadge(s.rpd_pct)}</td>
+      <td class="right mono">${s.capitalizacion || "—"}</td>
+    </tr>`;
+  }).join("");
+
+  // Stats
+  const withPrecio = stocks.filter(s => s.precio != null);
+  if (withPrecio.length > 0) {
+    document.getElementById("stats-grid").style.display = "grid";
+    document.getElementById("s-total").textContent = stocks.length;
+    document.getElementById("s-up").textContent = stocks.filter(s => s.variacion_pct > 0).length;
+    document.getElementById("s-down").textContent = stocks.filter(s => s.variacion_pct < 0).length;
+    const rpds = stocks.filter(s => s.rpd_pct);
+    document.getElementById("s-rpd").textContent = rpds.length
+      ? (rpds.reduce((a,s) => a + s.rpd_pct, 0) / rpds.length).toFixed(2) + "%"
+      : "—";
+  }
+}
+
+function toggleDetalle(ticker) {
+  if (selectedTicker === ticker) {
+    cerrarDetalle();
+  } else {
+    selectedTicker = ticker;
+    renderTable();
+    mostrarDetalle(ticker);
+  }
+}
+
+function mostrarDetalle(ticker) {
+  const s = stocks.find(x => x.ticker === ticker);
+  if (!s) return;
+  document.getElementById("d-titulo").textContent = `${s.ticker} · ${s.nombre}`;
+  document.getElementById("d-sub").textContent = `${s.yticker} · ${s.sector} · ${s.subsector}`;
+
+  const items = [
+    { label: "Precio actual", val: s.precio != null ? fmt(s.precio) + " €" : "—" },
+    { label: "Variación día", val: s.variacion_pct != null ? (s.variacion_pct >= 0 ? "▲ " : "▼ ") + Math.abs(s.variacion_pct).toFixed(2) + "%" : "—" },
+    { label: "Máximo 52s", val: s.max52 != null ? fmt(s.max52) + " €" : "—" },
+    { label: "Mínimo 52s", val: s.min52 != null ? fmt(s.min52) + " €" : "—" },
+    { label: "PER actual", val: s.per != null ? fmt(s.per, 1) + "x" : "—" },
+    { label: "PER futuro", val: s.per_futuro != null ? fmt(s.per_futuro, 1) + "x" : "—" },
+    { label: "DPA", val: s.dpa != null ? fmt(s.dpa) + " €" : "—" },
+    { label: "RPD", val: s.rpd_pct != null ? fmt(s.rpd_pct) + "%" : "—" },
+    { label: "Capitalización", val: s.capitalizacion || "—" },
+    { label: "Divisa", val: "EUR" },
+  ];
+
+  document.getElementById("d-grid").innerHTML = items.map(item => `
+    <div class="detalle-card">
+      <div class="detalle-label">${item.label}</div>
+      <div class="detalle-val">${item.val}</div>
+    </div>`).join("");
+
+  if (s.max52 && s.min52 && s.precio) {
+    const pct = Math.min(100, Math.max(0, (s.precio - s.min52) / (s.max52 - s.min52) * 100));
+    document.getElementById("d-rango").style.display = "block";
+    document.getElementById("d-rango-fill").style.width = pct + "%";
+    document.getElementById("d-min52").textContent = fmt(s.min52) + " €";
+    document.getElementById("d-max52").textContent = fmt(s.max52) + " €";
+  } else {
+    document.getElementById("d-rango").style.display = "none";
+  }
+
+  document.getElementById("detalle").style.display = "block";
+  document.getElementById("detalle").scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+function cerrarDetalle() {
+  selectedTicker = null;
+  document.getElementById("detalle").style.display = "none";
+  renderTable();
+}
+
+async function fetchData() {
+  const btn = document.getElementById("btn-refresh");
+  btn.disabled = true;
+  btn.innerHTML = '<span class="loading-spin">⟳</span> Actualizando...';
+  document.getElementById("error-box").style.display = "none";
+
+  const systemPrompt = `Eres un asistente financiero. Respondes ÚNICAMENTE con un JSON válido sin texto adicional ni bloques markdown.
+Formato exacto:
+{"timestamp":"ISO","stocks":[{"ticker":"ACS.MC","precio":111.10,"variacion_pct":-0.98,"max52":112.00,"min52":41.00,"per":30.18,"capitalizacion":"29504M","dpa":2.01,"rpd_pct":1.81,"per_futuro":23.98}]}
+Si no tienes un dato, usa null. No inventes precios.`;
+
+  const userPrompt = `Dame datos actuales de estas acciones BME: ACS.MC, IBE.MC, VIS.MC, LOG.MC, VID.MC, ENG.MC, EBRO.MC, MCM.MC, ANA.MC, ITX.MC, CBAV.MC, RED.MC, ACX.MC, GCO.MC, BBVA.MC, GEST.MC, NTGY.MC.
+Necesito: precio actual, variación % del día, max52, min52, PER, capitalización, DPA, RPD%, PER futuro.
+Responde SOLO con el JSON.`;
+
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        system: systemPrompt,
+        messages: [{ role: "user", content: userPrompt }]
+      })
+    });
+
+    const data = await res.json();
+    const text = (data.content || []).map(b => b.text || "").join("");
+    const clean = text.replace(/```json|```/g, "").trim();
+    const parsed = JSON.parse(clean);
+
+    stocks = STOCKS_BASE.map(s => {
+      const live = (parsed.stocks || []).find(d => d.ticker === s.yticker) || {};
+      return { ...s, ...live };
+    });
+
+    const now = new Date();
+    document.getElementById("last-update").textContent =
+      `Actualizado: ${now.toLocaleTimeString("es-ES")} · Auto-refresh cada 5 min`;
+
+    renderTable();
+    if (selectedTicker) mostrarDetalle(selectedTicker);
+
+  } catch(e) {
+    document.getElementById("error-box").style.display = "block";
+    document.getElementById("error-msg").textContent = "Error obteniendo datos: " + e.message;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = "⟳ Actualizar";
+  }
+}
+
+// Render inicial y auto-refresh
+renderTable();
+fetchData();
+setInterval(fetchData, 5 * 60 * 1000);
+</script>
+</body>
+</html>
