@@ -129,7 +129,7 @@
 <main>
   <div id="error-box"></div>
   <div class="stats-grid">
-    <div class="stat-card"><div class="stat-icon">🏛️</div><div class="stat-val">17</div><div class="stat-label">Empresas</div></div>
+    <div class="stat-card"><div class="stat-icon">🏛️</div><div class="stat-val" id="s-total">20</div><div class="stat-label">Empresas</div></div>
     <div class="stat-card"><div class="stat-icon">📈</div><div class="stat-val" id="s-up">—</div><div class="stat-label">Subiendo hoy</div></div>
     <div class="stat-card"><div class="stat-icon">📉</div><div class="stat-val" id="s-down">—</div><div class="stat-label">Bajando hoy</div></div>
     <div class="stat-card"><div class="stat-icon">💰</div><div class="stat-val" id="s-rpd">—</div><div class="stat-label">RPD Media</div></div>
@@ -185,7 +185,7 @@
     </div>
   </div>
 </main>
-<footer>Datos de referencia (4 abr 2025) · MM aproximadas · No constituyen asesoramiento financiero</footer>
+<footer>Datos de referencia (abr 2025) · MM aproximadas · No constituyen asesoramiento financiero</footer>
 
 <script>
 const DATOS_REF = {
@@ -206,6 +206,10 @@ const DATOS_REF = {
   "BBVA.MC": {precio:18.77, variacion_pct:-0.53,max52:22.33, min52:10.11, per:10.67,capitalizacion:"125407M",dpa:0.92,rpd_pct:4.90, per_futuro:8.53,  mm200:16.20, mm1000:10.12},
   "GEST.MC": {precio:3.00,  variacion_pct:-1.06,max52:3.54,  min52:2.33,  per:11.22,capitalizacion:"1769M",  dpa:0.09,rpd_pct:3.01, per_futuro:6.05,  mm200:2.90,  mm1000:3.27},
   "NTGY.MC": {precio:26.50, variacion_pct:2.16, max52:27.90, min52:23.30, per:12.19,capitalizacion:"25363M", dpa:2.37,rpd_pct:8.94, per_futuro:13.44,mm200:25.20, mm1000:25.45},
+  // Nuevas
+  "REP.MC":  {precio:12.80, variacion_pct:-0.70,max52:15.60, min52:10.20, per:8.20, capitalizacion:"18500M", dpa:0.97,rpd_pct:7.58, per_futuro:7.10,  mm200:13.40, mm1000:14.20},
+  "TRE.MC":  {precio:18.50, variacion_pct:1.20, max52:22.40, min52:13.80, per:14.50,capitalizacion:"920M",   dpa:0.55,rpd_pct:2.97, per_futuro:12.80, mm200:16.90, mm1000:15.20},
+  "IDR.MC":  {precio:16.20, variacion_pct:0.80, max52:18.50, min52:11.30, per:22.30,capitalizacion:"2850M",  dpa:0.18,rpd_pct:1.11, per_futuro:18.50, mm200:14.80, mm1000:13.10},
 };
 
 const STOCKS_BASE = [
@@ -214,6 +218,9 @@ const STOCKS_BASE = [
   {ticker:"VIS", yticker:"VIS.MC", nombre:"Viscofan",                     sector:"Sensitivo",subsector:"Industrial"},
   {ticker:"LOG", yticker:"LOG.MC", nombre:"Logista",                      sector:"Sensitivo",subsector:"Industrial"},
   {ticker:"VID", yticker:"VID.MC", nombre:"Vidrala",                      sector:"Sensitivo",subsector:"Industrial"},
+  {ticker:"REP", yticker:"REP.MC", nombre:"Repsol",                       sector:"Sensitivo",subsector:"Energía"},
+  {ticker:"TRE", yticker:"TRE.MC", nombre:"Técnicas Reunidas",            sector:"Sensitivo",subsector:"Industrial"},
+  {ticker:"IDR", yticker:"IDR.MC", nombre:"Indra",                        sector:"Sensitivo",subsector:"Tecnología"},
   {ticker:"ENG", yticker:"ENG.MC", nombre:"Enagás SA",                    sector:"Defensivo",subsector:"Utilidades"},
   {ticker:"EBRO",yticker:"EBRO.MC",nombre:"Ebro Foods",                   sector:"Defensivo",subsector:"Utilidades"},
   {ticker:"MCM", yticker:"MCM.MC", nombre:"Miguel y Costas",              sector:"Defensivo",subsector:"Utilidades"},
@@ -228,17 +235,17 @@ const STOCKS_BASE = [
   {ticker:"NTGY",yticker:"NTGY.MC",nombre:"Naturgy",                      sector:"Defensivo",subsector:"Utilidades"},
 ];
 
-function calcDesc(precio, mm) {
-  if (!precio || !mm) return null;
-  return (precio - mm) / mm * 100;
+function calcDesc(precio,mm){
+  if(!precio||!mm)return null;
+  return(precio-mm)/mm*100;
 }
 
-let stocks = STOCKS_BASE.map(s => {
-  const r = DATOS_REF[s.yticker] || {};
-  return {...s,...r, desc_mm200:calcDesc(r.precio,r.mm200), desc_mm1000:calcDesc(r.precio,r.mm1000)};
+let stocks=STOCKS_BASE.map(s=>{
+  const r=DATOS_REF[s.yticker]||{};
+  return{...s,...r,desc_mm200:calcDesc(r.precio,r.mm200),desc_mm1000:calcDesc(r.precio,r.mm1000)};
 });
 
-let sortKey="ticker", sortDir=1, filtroSector="Todos", selectedTicker=null;
+let sortKey="ticker",sortDir=1,filtroSector="Todos",selectedTicker=null;
 
 function fmt(val,dec=2,suf=""){
   if(val==null||val===""||val==="null")return"—";
@@ -252,13 +259,13 @@ function pctBadge(val){
 function perBadge(val){
   if(!val)return"—";
   let c="per-ok";
-  if(val<15)c="per-low"; else if(val<20)c="per-mid"; else if(val>25)c="per-high";
+  if(val<15)c="per-low";else if(val<20)c="per-mid";else if(val>25)c="per-high";
   return`<span class="per-badge ${c}">${Number(val).toFixed(1)}x</span>`;
 }
 function rpdBadge(val){
   if(!val)return"—";
   let c="rpd-low";
-  if(val>=5)c="rpd-high"; else if(val>=3)c="rpd-mid";
+  if(val>=5)c="rpd-high";else if(val>=3)c="rpd-mid";
   return`<span class="rpd-badge ${c}">${Number(val).toFixed(2)}%</span>`;
 }
 function mmBadge(val){
@@ -267,9 +274,8 @@ function mmBadge(val){
   const a=val<=0?"▼":"▲";
   return`<span class="mm-badge ${c}">${a} ${Math.abs(val).toFixed(1)}%</span>`;
 }
-
 function sortBy(key){
-  if(sortKey===key)sortDir=-sortDir; else{sortKey=key;sortDir=1;}
+  if(sortKey===key)sortDir=-sortDir;else{sortKey=key;sortDir=1;}
   document.querySelectorAll("th").forEach(t=>t.classList.remove("active"));
   const th=document.getElementById("th-"+key);
   if(th)th.classList.add("active");
@@ -281,7 +287,6 @@ function setFiltro(s,btn){
   btn.classList.add("active");
   renderTable();
 }
-
 function renderTable(){
   const q=document.getElementById("search").value.toLowerCase();
   let rows=stocks.filter(s=>{
@@ -291,11 +296,10 @@ function renderTable(){
   }).sort((a,b)=>{
     const av=a[sortKey],bv=b[sortKey];
     if(av==null&&bv==null)return 0;
-    if(av==null)return 1; if(bv==null)return-1;
+    if(av==null)return 1;if(bv==null)return-1;
     if(typeof av==="string")return av.localeCompare(bv)*sortDir;
     return(av-bv)*sortDir;
   });
-
   document.getElementById("tbody").innerHTML=rows.map(s=>{
     const sel=s.ticker===selectedTicker?"selected":"";
     return`<tr class="${sel}" onclick="toggleDetalle('${s.ticker}')">
@@ -317,47 +321,40 @@ function renderTable(){
       <td class="right mono">${s.capitalizacion||"—"}</td>
     </tr>`;
   }).join("");
-
+  document.getElementById("s-total").textContent=stocks.length;
   document.getElementById("s-up").textContent=stocks.filter(s=>s.variacion_pct>0).length;
   document.getElementById("s-down").textContent=stocks.filter(s=>s.variacion_pct<0).length;
   const rpds=stocks.filter(s=>s.rpd_pct);
   document.getElementById("s-rpd").textContent=rpds.length?(rpds.reduce((a,s)=>a+s.rpd_pct,0)/rpds.length).toFixed(2)+"%":"—";
   document.getElementById("s-bajomm").textContent=stocks.filter(s=>s.desc_mm200!=null&&s.desc_mm200<0).length;
 }
-
 function toggleDetalle(ticker){
   if(selectedTicker===ticker){cerrarDetalle();return;}
-  selectedTicker=ticker; renderTable(); mostrarDetalle(ticker);
+  selectedTicker=ticker;renderTable();mostrarDetalle(ticker);
 }
-
 function mostrarDetalle(ticker){
   const s=stocks.find(x=>x.ticker===ticker);
   if(!s)return;
   document.getElementById("d-titulo").textContent=`${s.ticker} · ${s.nombre}`;
   document.getElementById("d-sub").textContent=`${s.yticker} · ${s.sector} · ${s.subsector}`;
-
-  const mkCards=(items)=>items.map(i=>`<div class="detalle-card"><div class="detalle-label">${i.l}</div><div class="detalle-val">${i.v}</div></div>`).join("");
-
+  const mkCards=items=>items.map(i=>`<div class="detalle-card"><div class="detalle-label">${i.l}</div><div class="detalle-val">${i.v}</div></div>`).join("");
   document.getElementById("d-grid-precio").innerHTML=mkCards([
     {l:"Precio actual",v:s.precio!=null?fmt(s.precio)+" €":"—"},
-    {l:"Variación día", v:s.variacion_pct!=null?(s.variacion_pct>=0?"▲ ":"▼ ")+Math.abs(s.variacion_pct).toFixed(2)+"%":"—"},
+    {l:"Variación día",v:s.variacion_pct!=null?(s.variacion_pct>=0?"▲ ":"▼ ")+Math.abs(s.variacion_pct).toFixed(2)+"%":"—"},
     {l:"Máximo 52s",   v:s.max52!=null?fmt(s.max52)+" €":"—"},
     {l:"Mínimo 52s",   v:s.min52!=null?fmt(s.min52)+" €":"—"},
     {l:"Capitalización",v:s.capitalizacion||"—"},
   ]);
-
   document.getElementById("d-grid-mm").innerHTML=mkCards([
     {l:"MM 200 sesiones", v:s.mm200!=null?fmt(s.mm200)+" €":"—"},
     {l:"Descuento MM200", v:s.desc_mm200!=null?(s.desc_mm200<=0?"▼ ":"▲ ")+Math.abs(s.desc_mm200).toFixed(2)+"%":"—"},
     {l:"MM 1000 sesiones",v:s.mm1000!=null?fmt(s.mm1000)+" €":"—"},
     {l:"Descuento MM1000",v:s.desc_mm1000!=null?(s.desc_mm1000<=0?"▼ ":"▲ ")+Math.abs(s.desc_mm1000).toFixed(2)+"%":"—"},
   ]);
-
-  // Barras visuales MM
   let bars="";
   [{l:"MM 200",mm:s.mm200,d:s.desc_mm200},{l:"MM 1000",mm:s.mm1000,d:s.desc_mm1000}].forEach(m=>{
-    if(!m.mm||!s.precio)return;
-    const mn=Math.min(s.precio,m.mm)*0.95, mx=Math.max(s.precio,m.mm)*1.05, rng=mx-mn;
+    if(!m.mm||!s.precio||m.d==null)return;
+    const mn=Math.min(s.precio,m.mm)*0.95,mx=Math.max(s.precio,m.mm)*1.05,rng=mx-mn;
     const pp=((s.precio-mn)/rng*100).toFixed(1);
     const mp=((m.mm-mn)/rng*100).toFixed(1);
     const col=m.d<=0?"#1a9e3f":"#c0220a";
@@ -371,7 +368,6 @@ function mostrarDetalle(ticker){
     </div>`;
   });
   document.getElementById("d-mm-bars").innerHTML=bars||'<p style="color:#bbb;font-size:12px;margin-top:8px">Sin datos de MM</p>';
-
   document.getElementById("d-grid-val").innerHTML=mkCards([
     {l:"PER actual", v:s.per!=null?fmt(s.per,1)+"x":"—"},
     {l:"PER futuro", v:s.per_futuro!=null?fmt(s.per_futuro,1)+"x":"—"},
@@ -379,43 +375,38 @@ function mostrarDetalle(ticker){
     {l:"RPD",        v:s.rpd_pct!=null?fmt(s.rpd_pct)+"%":"—"},
     {l:"Divisa",     v:"EUR"},
   ]);
-
   if(s.max52&&s.min52&&s.precio){
     const pct=Math.min(100,Math.max(0,(s.precio-s.min52)/(s.max52-s.min52)*100));
     document.getElementById("d-rango").style.display="block";
     document.getElementById("d-rango-fill").style.width=pct+"%";
     document.getElementById("d-min52").textContent=fmt(s.min52)+" €";
     document.getElementById("d-max52").textContent=fmt(s.max52)+" €";
-  } else document.getElementById("d-rango").style.display="none";
-
+  }else document.getElementById("d-rango").style.display="none";
   document.getElementById("detalle").style.display="block";
   document.getElementById("detalle").scrollIntoView({behavior:"smooth",block:"nearest"});
 }
-
 function cerrarDetalle(){
   selectedTicker=null;
   document.getElementById("detalle").style.display="none";
   renderTable();
 }
-
 async function fetchData(){
   const btn=document.getElementById("btn-refresh");
-  btn.disabled=true; btn.innerHTML='<span class="loading-spin">⟳</span> Actualizando...';
+  btn.disabled=true;btn.innerHTML='<span class="loading-spin">⟳</span> Actualizando...';
   document.getElementById("error-box").style.display="none";
-
   const PROXIES=[
     u=>`https://corsproxy.io/?${encodeURIComponent(u)}`,
     u=>`https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
   ];
   const TARGET="https://api.anthropic.com/v1/messages";
+  const tickers="ACS.MC IBE.MC VIS.MC LOG.MC VID.MC REP.MC TRE.MC IDR.MC ENG.MC EBRO.MC MCM.MC ANA.MC ITX.MC CBAV.MC RED.MC ACX.MC GCO.MC BBVA.MC GEST.MC NTGY.MC";
   const body=JSON.stringify({
-    model:"claude-sonnet-4-20250514", max_tokens:1500,
+    model:"claude-sonnet-4-20250514",max_tokens:2000,
     system:`Eres un asistente financiero. Respondes ÚNICAMENTE con JSON válido sin texto ni markdown.
 Formato: {"stocks":[{"ticker":"ACS.MC","precio":111.10,"variacion_pct":-0.98,"max52":112.00,"min52":41.00,"per":30.18,"capitalizacion":"29504M","dpa":2.01,"rpd_pct":1.81,"per_futuro":23.98,"mm200":55.80,"mm1000":45.22}]}
 Usa null si no tienes el dato.`,
-    messages:[{role:"user",content:`Datos actualizados de: ACS.MC IBE.MC VIS.MC LOG.MC VID.MC ENG.MC EBRO.MC MCM.MC ANA.MC ITX.MC CBAV.MC RED.MC ACX.MC GCO.MC BBVA.MC GEST.MC NTGY.MC. Necesito: precio, variacion_pct, max52, min52, per, capitalizacion, dpa, rpd_pct, per_futuro, mm200 (media móvil 200 sesiones aproximada), mm1000 (media móvil 1000 sesiones aproximada). Solo JSON.`}]
+    messages:[{role:"user",content:`Datos actualizados de: ${tickers}. Campos: precio, variacion_pct, max52, min52, per, capitalizacion, dpa, rpd_pct, per_futuro, mm200, mm1000. Solo JSON.`}]
   });
-
   let ok=false;
   for(const px of PROXIES){
     try{
@@ -435,20 +426,18 @@ Usa null si no tienes el dato.`,
         document.getElementById("last-update").textContent=`Actualizado: ${new Date().toLocaleTimeString("es-ES")} · Auto-refresh 5 min`;
         renderTable();
         if(selectedTicker)mostrarDetalle(selectedTicker);
-        ok=true; break;
+        ok=true;break;
       }
     }catch(e){continue;}
   }
-
   if(!ok){
     const eb=document.getElementById("error-box");
     eb.style.display="block";
-    eb.innerHTML="⚠️ Mostrando datos de referencia (4 abr 2025). No se pudo conectar en tiempo real.";
-    document.getElementById("last-update").textContent="Datos de referencia · 4 abr 2025";
+    eb.innerHTML="⚠️ Mostrando datos de referencia. No se pudo conectar en tiempo real.";
+    document.getElementById("last-update").textContent="Datos de referencia · abr 2025";
   }
-  btn.disabled=false; btn.innerHTML="⟳ Actualizar";
+  btn.disabled=false;btn.innerHTML="⟳ Actualizar";
 }
-
 renderTable();
 fetchData();
 setInterval(fetchData,5*60*1000);
