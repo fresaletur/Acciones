@@ -224,8 +224,7 @@
 <footer>Precios vía Financial Modeling Prep · MM aproximadas · No constituyen asesoramiento financiero</footer>
 
 <script>
-const API_KEY = "HvTndO7XfRdtO4aHlKt66BiswEQuOmlc";
-const BASE_URL = "https://financialmodelingprep.com/api/v3";
+// Datos desde datos.json (GitHub Actions)
 
 // Datos fundamentales estáticos (precio se actualiza en tiempo real)
 const DATOS_REF = {
@@ -292,66 +291,48 @@ async function fetchAll() {
   const btn = document.getElementById("btn-refresh");
   btn.disabled = true;
   btn.innerHTML = '<span class="loading-spin">⟳</span> Actualizando...';
-
   try {
-    const syms = STOCKS_BASE.map(s => s.yticker).join(",");
-    const url = `${BASE_URL}/quote/${syms}?apikey=${API_KEY}`;
-    const res = await fetch(url);
-
+    const res = await fetch(`datos.json?t=${Date.now()}`);
     if (!res.ok) throw new Error("HTTP " + res.status);
-    const data = await res.json();
-
-    if (Array.isArray(data) && data.length > 0) {
-      stocks = STOCKS_BASE.map(s => {
-        const r = DATOS_REF[s.yticker] || {};
-        const live = data.find(q => q.symbol === s.yticker) || {};
-        const precio = live.price || null;
-        const mm200 = live.priceAvg200 || r.mm200 || null;
-        const mm1000 = r.mm1000 || null;
-        return {
-          ...s, ...r,
-          precio,
-          variacion_pct: live.changesPercentage || null,
-          max52: live.yearHigh || r.max52 || null,
-          min52: live.yearLow || r.min52 || null,
-          per: live.pe || r.per || null,
-          per_futuro: r.per_futuro || null,
-          rpd_pct: r.rpd_pct || null,
-          dpa: r.dpa || null,
-          capitalizacion: live.marketCap ? formatCap(live.marketCap) : r.capitalizacion || null,
-          mm200,
-          mm1000,
-          desc_mm200: calcDesc(precio, mm200),
-          desc_mm1000: calcDesc(precio, mm1000),
-        };
-      });
-
-      const now = new Date();
-      document.getElementById("last-update").textContent =
-        `⚡ Tiempo real · ${now.toLocaleTimeString("es-ES")}`;
-      document.getElementById("error-box").style.display = "none";
-
-    } else {
-      throw new Error("Sin datos");
-    }
-
+    const json = await res.json();
+    const quotes = json.quotes || [];
+    if (quotes.length === 0) throw new Error("datos.json vacío");
+    stocks = STOCKS_BASE.map(s => {
+      const r    = DATOS_REF[s.yticker] || {};
+      const live = quotes.find(q => q.symbol === s.yticker) || {};
+      const precio = live.price ?? null;
+      const mm200  = live.ma200 ?? r.mm200 ?? null;
+      const mm1000 = r.mm1000 ?? null;
+      return { ...s, ...r, precio,
+        variacion_pct: live.changePct  ?? null,
+        max52: live.high52 ?? r.max52 ?? null,
+        min52: live.low52  ?? r.min52 ?? null,
+        per:   live.pe     ?? r.per   ?? null,
+        per_futuro: r.per_futuro ?? null,
+        rpd_pct: r.rpd_pct ?? null,
+        dpa: r.dpa ?? null,
+        capitalizacion: live.marketCap ? formatCap(live.marketCap) : r.capitalizacion ?? null,
+        mm200, mm1000,
+        desc_mm200:  calcDesc(precio, mm200),
+        desc_mm1000: calcDesc(precio, mm1000),
+      };
+    });
+    const ts = json.updated ? json.updated.replace("T"," ").slice(0,16)+" UTC" : "";
+    document.getElementById("last-update").textContent = `⚡ Tiempo real · ${ts}`;
+    document.getElementById("error-box").style.display = "none";
   } catch (e) {
-    // Fallback datos de referencia
     stocks = STOCKS_BASE.map(s => {
       const r = DATOS_REF[s.yticker] || {};
       const precio = r.precio_ref || null;
-      return {
-        ...s, ...r, precio,
-        desc_mm200: calcDesc(precio, r.mm200),
-        desc_mm1000: calcDesc(precio, r.mm1000),
-      };
+      return { ...s, ...r, precio,
+        desc_mm200:  calcDesc(precio, r.mm200),
+        desc_mm1000: calcDesc(precio, r.mm1000) };
     });
     const eb = document.getElementById("error-box");
     eb.style.display = "block";
-    eb.innerHTML = `⚠️ Error conectando con la API: ${e.message}. Mostrando datos de referencia.`;
+    eb.innerHTML = `⚠️ ${e.message}. Mostrando datos de referencia.`;
     document.getElementById("last-update").textContent = "Datos de referencia · abr 2025";
   }
-
   renderTable();
   if (selectedTicker) mostrarDetalle(selectedTicker);
   btn.disabled = false;
